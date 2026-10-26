@@ -1,0 +1,56 @@
+name: bot-hosting Auto Renew
+
+on:
+  schedule:
+    # 每天 UTC 0点 (北京时间 8点) 运行
+    - cron: '25 13 11/3 * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        npm install
+        npx playwright install-deps chrome
+      
+    - name: Run Renew Script
+      env:
+        # 将 BOT_USERS_JSON 配置在 GitHub Repository Secrets 中
+        # 格式: [{"username": "xxx", "password": "xxx"}, ...]
+        BOT_USERS_JSON: ${{ secrets.BOT_USERS_JSON }}
+        SESSION_TOKEN: ${{ secrets.SESSION_TOKEN }}
+        DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        HTTP_PROXY: ${{ secrets.HTTP_PROXY }}
+        http_proxy: ${{ secrets.http_proxy }}
+        IS_PROXY: ${{ secrets.IS_PROXY }}
+        PROXY_SERVER: ${{ secrets.PROXY_SERVER }}
+        HEADLESS: ${{ secrets.HEADLESS }}
+        CHROME_PATH: ${{ secrets.CHROME_PATH }}
+        NO_PROXY: ${{ secrets.NO_PROXY }}
+        SMTP_CONFIG: ${{ secrets.SMTP_CONFIG }}
+        TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      # 使用 xvfb-run 模拟有头环境运行
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" node bot-hosting_action_renew.js
+
+    - name: Upload Screenshots
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshots
+        path: screenshots/
