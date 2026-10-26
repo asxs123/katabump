@@ -34,7 +34,6 @@ jobs:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         HTTP_PROXY: ${{ secrets.HTTP_PROXY }}
-        http_proxy: ${{ secrets.http_proxy }}
         IS_PROXY: ${{ secrets.IS_PROXY }}
         PROXY_SERVER: ${{ secrets.PROXY_SERVER }}
         HEADLESS: ${{ secrets.HEADLESS }}
