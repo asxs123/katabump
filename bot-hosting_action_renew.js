@@ -1232,17 +1232,25 @@ async function renewForAccount(context, page, account) {
         return;
     }
 
-    // 点击续期按钮
+    // ========== ✅ 修正部分开始 ==========
+    // 点击弹窗内的续期确认按钮（限定在 #renew-dialog 内，避免匹配到背景层按钮）
     console.log('⏳ 等待续期按钮可用并点击...');
     await sleep(5000);
+
+    // 定义弹窗内的续期按钮定位器（严格限定容器）
+    const dialogRenewButton = page.locator('#renew-dialog')
+        .getByRole('button', { name: /Renew for 4 days/i });
+
     let clickedConfirm = false;
     for (let retry = 0; retry < 3; retry++) {
         try {
-            await page.getByRole('button', { name: /Renew for 4 days/i }).click({ timeout: 8000 });
+            // 先等待按钮可见且可点击
+            await dialogRenewButton.waitFor({ state: 'visible', timeout: 8000 });
+            await dialogRenewButton.click({ timeout: 8000 });
             console.log('✅ 已点击续期按钮');
             clickedConfirm = true;
         } catch (e) {
-            console.log(`续期按钮点击失败: ${e.message}`);
+            console.log(`续期按钮点击失败 (尝试 ${retry + 1}/3): ${e.message}`);
         }
 
         await sleep(2000);
@@ -1257,6 +1265,8 @@ async function renewForAccount(context, page, account) {
         }
         await sleep(3000);
     }
+    // ========== ✅ 修正部分结束 ==========
+
     if (!clickedConfirm) console.log('⚠️ 未能点击确认续期按钮，继续检查结果...');
 
     console.log('⏳ 等待新的过期时间...');
