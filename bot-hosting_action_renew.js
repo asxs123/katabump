@@ -904,6 +904,9 @@ function extractExpiryDate(pageSource) {
         /(\d{4}\/\d{2}\/\d{2})\s*[\-–]\s*renew/,
         /(\d{2}\/\d{2}\/\d{4})\s*[\-–]\s*renew/,
         /(\d{4}\/\d{2}\/\d{2})\s*[\-–]\s*renew manually to extend for 4 days/,
+        // 新增中文匹配规则
+        /(\d{4}\/\d{2}\/\d{2})\s*到期。手动续期可再延长 4 天。/,
+        /(\d{4}\/\d{2}\/\d{2})\s*到期/, 
     ];
     for (const pattern of patterns) {
         const match = pattern.exec(pageSource);
@@ -942,15 +945,30 @@ async function detectRenewControls(page) {
         for (const handle of handles) {
             let text = '';
             try { text = (await handle.innerText()).trim(); } catch (e) { continue; }
-            if (!text || text.length > 200 || !/renew/i.test(text)) continue;
-
-            const m = text.match(/Renew in (\d{2}:\d{2}:\d{2})/i);
-            if (m) {
-                countdownText = m[1];
-                continue;
+            // if (!text || text.length > 200 || !/renew/i.test(text)) continue;
+            if (!text || text.length > 200) continue;
+            if (/renew/i.test(text)) {
+                const m = text.match(/Renew in (\d{2}:\d{2}:\d{2})/i);
+                if (m) {
+                    countdownText = m[1];
+                    continue;
+                }
+                if (!/\bin\b/i.test(text)) {
+                    hasRenewButton = true;
+                }
             }
-            if (/renew/i.test(text) && !/\bin\b/i.test(text)) {
-                hasRenewButton = true;
+            // --- 中文逻辑（适配新图 + 旧图） ---
+            if (/续期/i.test(text)) {
+                // 1. 提取“续期 X 天”或“延长 X 天”
+                const dayM = text.match(/(\d{2}:\d{2}:\d{2})\s*后可续期/i);
+                if (dayM) {
+                    countdownText = dayM[1];
+                    continue;
+                }
+                // 2. 纯续期按钮（如“续期免费套餐”、“续期”）
+                if (!/后可/.test(text)) {
+                    hasRenewButton = true;
+                }
             }
         }
     } catch (e) {
