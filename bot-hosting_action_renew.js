@@ -977,8 +977,10 @@ async function detectRenewControls(page) {
 }
 
 function outerRenewLocator(page) {
-    return page.locator('button:has-text("Renew"), a:has-text("Renew")')
-        .filter({ hasNotText: 'Renew in' }).first();
+    return page.locator('button:has-text("Renew"), a:has-text("Renew"), button:has-text("续期"), a:has-text("续期")')
+        .filter({ hasNotText: 'Renew in' })
+        .filter({ hasNotText: '后可续期' })
+        .first();
 }
 
 /* ============================== 登录：Email + 密码（多账号主通道） ============================== */
