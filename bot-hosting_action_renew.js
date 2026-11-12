@@ -905,8 +905,7 @@ function extractExpiryDate(pageSource) {
         /(\d{2}\/\d{2}\/\d{4})\s*[\-–]\s*renew/,
         /(\d{4}\/\d{2}\/\d{2})\s*[\-–]\s*renew manually to extend for 4 days/,
         // 新增中文匹配规则
-        /(\d{4}\/\d{2}\/\d{2})\s*到期。手动续期可再延长 4 天。/,
-        /(\d{4}\/\d{2}\/\d{2})\s*到期/, 
+        /(\d{4}\年\d{2}\月\d{2}日)\s*到期/, 
     ];
     for (const pattern of patterns) {
         const match = pattern.exec(pageSource);
