@@ -1259,7 +1259,8 @@ async function renewForAccount(context, page, account) {
 
     // 定义弹窗内的续期按钮定位器（严格限定容器）
     const dialogRenewButton = page.locator('#renew-dialog')
-        .getByRole('button', { name: /Renew for 4 days/i });
+        // .getByRole('button', { name: /Renew for 4 days/i });
+        .getByRole('button', { name: /Renew for 4 days|续期 4 天/i });
 
     let clickedConfirm = false;
     for (let retry = 0; retry < 3; retry++) {
