@@ -1106,6 +1106,7 @@ async function loginWithEmailPassword(context, page, user) {
             let bodyText = '';
             try { bodyText = await page.locator('body').innerText(); } catch (e) { }
             const lower = bodyText.toLowerCase();
+            console.log(`   >> 页面可见文本: ${lower}`);
 
             if (/complete the (captcha|verification)|verify you are human|please verify|确认您是真人/.test(lower)) {
                 console.log('   >> ⚠️ 需要完成验证码，重试 Turnstile...');
@@ -1117,12 +1118,12 @@ async function loginWithEmailPassword(context, page, user) {
                 break;   // 重新提交
             }
 
-            if (/incorrect|invalid|wrong|not found|does not exist|no account|rate limit|too many|failed|banned|suspended/.test(lower)) {
+            if (/incorrect|invalid|wrong|not found|does not exist|rate limit|too many|failed|banned|suspended/.test(lower)) {
                 // 提取错误行（取较短的、命中关键词的行）
                 const errLine = bodyText.split('\n')
                     .map(s => s.trim())
                     .find(s => s.length > 3 && s.length < 160
-                        && /incorrect|invalid|wrong|not found|does not exist|no account|rate limit|too many|failed|banned|suspended/i.test(s));
+                        && /incorrect|invalid|wrong|not found|does not exist|rate limit|too many|failed|banned|suspended/i.test(s));
                 const errText = errLine || '账号或密码错误';
                 console.log(`   >> ❌ 登录失败: ${errText}`);
                 await page.screenshot({ path: path.join(PHOTO_DIR, `login_fail_${safeName(email)}.png`), fullPage: true }).catch(() => { });
