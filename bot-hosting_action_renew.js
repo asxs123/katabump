@@ -1307,7 +1307,7 @@ async function renewForAccount(context, page, account) {
         }
         if (clicked) {
             console.log('   >> CDP 点击已发送，等待验证结果...');
-            await sleep(3000);
+            await sleep(4000);
         }
 
         if (await waitForTurnstilePass(page, 20000)) {
