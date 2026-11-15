@@ -397,6 +397,82 @@ async function waitForTurnstilePass(page, timeoutMs = 30000) {
     return false;
 }
 
+/**
+ * 真实鼠标点 grippy-host 把手，收起 Adsense 动态锚点广告
+ * 收起后护盾 #click-protector 仍在 DOM，但用 pointer-events:none 解除遮挡
+ */
+async function dismissAnchorAd(page) {
+  // 等把手出现
+  try {
+    await page.waitForSelector('.grippy-host', { timeout: 10000 });
+  } catch {
+    console.log('⚠️ grippy-host 未出现，跳过广告收起');
+    return;
+  }
+
+  // 判断是否已收到底部
+  const isNearBottom = () => page.evaluate(() => {
+    const host = document.querySelector('.grippy-host');
+    if (!host) return true;
+    const r = host.getBoundingClientRect();
+    return r.y > window.innerHeight - 20;
+  });
+
+  // 最多点 3 次（全展开要点 2 次）
+  for (let i = 1; i <= 3; i++) {
+    if (await isNearBottom()) {
+      console.log('✅ 广告把手已收到底部');
+      break;
+    }
+
+    const box = await page.evaluate(() => {
+      const host = document.querySelector('.grippy-host');
+      if (!host) return null;
+      const r = host.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return null;
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+
+    if (!box) {
+      console.log('❌ grippy-host 无可见区域');
+      break;
+    }
+
+    console.log(`👆 第 ${i} 次点把手，y=${box.y.toFixed(1)}`);
+    await page.mouse.move(box.x, box.y);
+    await sleep(150);
+    await page.mouse.down();
+    await sleep(80);
+    await page.mouse.up();
+
+    // 等 CSS 过渡动画
+    await sleep(1200);
+  }
+
+  // 兜底：护盾还在就只解指针事件，不删节点
+//   const protectorCount = await page.evaluate(
+//     () => document.querySelectorAll('#click-protector').length
+//   );
+//   if (protectorCount > 0) {
+//     console.log(`⚠️ #click-protector 仍 ${protectorCount} 个，设 pointer-events:none 兜底`);
+//     await page.addStyleTag({
+//       content: `#click-protector, .adsbygoogle-noablate { pointer-events: none !important; }`
+//     });
+//   }
+
+//   // 验证续期按钮不再被护盾挡
+//   const topEl = await page.evaluate(() => {
+//     const btn = [...document.querySelectorAll('button')]
+//       .find(b => /续期 4 天|Renew for 4 days/i.test(b.textContent || b.title || ''));
+//     if (!btn) return 'btn-not-found';
+//     const r = btn.getBoundingClientRect();
+//     const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+//     return el ? (el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className : '')) : 'null';
+//   });
+//   console.log('🔍 续期按钮最上层元素:', topEl);
+}
+
+
 /* ============================== 代理 / Chrome ============================== */
 
 function checkPort(port) {
@@ -1254,6 +1330,10 @@ async function renewForAccount(context, page, account) {
 
     // ========== ✅ 修正部分开始 ==========
     // 点击弹窗内的续期确认按钮（限定在 #renew-dialog 内，避免匹配到背景层按钮）
+    console.log('⏳ 先收起锚点广告，再等续期按钮...');
+    // ① 收广告（真实点击把手 + 护盾兜底）
+    await dismissAnchorAd(page);
+
     console.log('⏳ 等待续期按钮可用并点击...');
     await sleep(5000);
 
