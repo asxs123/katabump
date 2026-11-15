@@ -1330,9 +1330,6 @@ async function renewForAccount(context, page, account) {
 
     // ========== ✅ 修正部分开始 ==========
     // 点击弹窗内的续期确认按钮（限定在 #renew-dialog 内，避免匹配到背景层按钮）
-    console.log('⏳ 先收起锚点广告，再等续期按钮...');
-    // ① 收广告（真实点击把手 + 护盾兜底）
-    await dismissAnchorAd(page);
 
     console.log('⏳ 等待续期按钮可用并点击...');
     await sleep(5000);
@@ -1577,6 +1574,10 @@ async function run() {
                 try { await page.screenshot({ path: failShot, fullPage: true }); } catch (e) { }
                 continue;   // 处理下一个账号
             }
+
+            console.log('⏳ 先收起锚点广告，再等续期按钮...');
+            // ① 收广告（真实点击把手 + 护盾兜底）
+            await dismissAnchorAd(page);
 
             // 续期
             await renewForAccount(context, page, user);
